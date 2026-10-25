@@ -354,6 +354,7 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
                 shortcuts.attach(heading_label, column, 0, 1, 1)
             shortcut_rows = (
                 ("v / V", "Switch layout"),
+                ("s / S", "Reverse file order"),
                 ("+ / =", "Increase zoom"),
                 ("-", "Decrease zoom"),
                 ("c / C", "Clear saved files"),
@@ -540,7 +541,7 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
 
             decrease.connect("clicked", lambda _button: change_zoom(-25))
             increase.connect("clicked", lambda _button: change_zoom(25))
-            for path in paths:
+            for path in reversed(paths):
                 item = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
                 item.set_cursor_from_name("grab")
                 item.add_css_class("file-row")
@@ -642,6 +643,10 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
                     return True
                 if keyval in (Gdk.KEY_v, Gdk.KEY_V):
                     toggle_layout(None)
+                    return True
+                if keyval in (Gdk.KEY_s, Gdk.KEY_S):
+                    entries.reverse()
+                    apply_layout()
                     return True
                 if keyval in (Gdk.KEY_c, Gdk.KEY_C):
                     try:

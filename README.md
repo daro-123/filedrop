@@ -61,6 +61,8 @@ Quote direct arguments when names contain shell whitespace or metacharacters. Pu
 
 Filedrop reads stdin only when stdin is not a terminal. It reads finite input through EOF before opening the window; it does not monitor a live stream. Positional arguments come first, followed by stdin records. Newline delimits records by default, and `--null` / `-0` selects NUL delimiters. Empty records are ignored. Other spaces, quotes, and backslashes are literal filename characters, not shell syntax. Use NUL delimiters for filenames containing newlines. Relative paths resolve against the launch working directory. `~`, variables, globs, and `file://` values are not expanded. Duplicate absolute spellings collapse while retaining their first position.
 
+Rows and tiles show the last-added file first by default, reversing input order rather than sorting by file timestamps. Press `s` or `S` to toggle between newest-first and oldest-first order. Switching layouts or changing zoom preserves the current order; each new window starts newest-first. Sorting changes only the display, not the saved queue or source files. Duplicate paths retain their original position and do not become newer when supplied again.
+
 Examples:
 
 ```sh
@@ -73,7 +75,7 @@ find . -type f -print0 | filedrop --null
 
 `--add` saves file paths for later use without opening the window. Repeat calls append paths; duplicates keep their first position. The saved queue stores absolute path names, not file contents. Files must exist when added and again when loaded.
 
-`--load` opens saved files plus any direct arguments or stdin paths. Saved paths come first. Loading does not consume the queue, so repeat loads show same saved files. `--clear` removes saved path records only; it never removes source files and does not read stdin. It accepts no positional files.
+`--load` opens saved files plus any direct arguments or stdin paths. Saved paths come first in the combined input, so newly supplied files appear above saved files in the default newest-first view. Loading does not consume the queue, so repeat loads show the same saved files. `--clear` removes saved path records only; it never removes source files and does not read stdin. It accepts no positional files.
 
 ```sh
 filedrop --add "/path/to/a file.txt"
@@ -108,6 +110,8 @@ Emacs, evaluated with `M-:`:
                        :connection-type 'pipe :noquery t)))
   (process-send-eof p))
 ```
+
+For later dragging, invoke `filedrop --add -- PATH` instead of opening a window, then run `filedrop --load` when ready to drag. In Dired, pass marked files (or the file at point) from `dired-get-marked-files` as separate arguments to `--add`. The queue stores paths only; it does not save modified Emacs buffers or copy their contents.
 
 ## Verification
 
@@ -145,3 +149,5 @@ List is the default; select initial grid independently with `--layout grid`. Pre
 Height smoke verified content-fit and shrinking after clear in compact, undecorated, grid, and shell modes; fixed 520-pixel height stayed fixed through layout changes, zoom changes, and clearing. Undecorated auto-height smoke at 150% zoom measured equal 19-pixel gaps above and below a grid tile in a 111-pixel window, and equal 15-pixel gaps around a list row in a 68-pixel window. Grid gaps also stayed equal at 75% and 200% zoom. Six grid tiles at 200% zoom fit their two measured rows without scrolling. Long list and grid content scrolled in an 864-pixel window on the tested monitor.
 
 Shortcut-overlay desktop smoke verified that an undecorated auto-height grid window grew from 92 to 174 pixels when `?` showed all shortcut rows, then shrank to 92 pixels when hidden. List mode grew from 58 to 174 pixels and shrank back. A 12-row list measured 454 pixels; a 40-tile grid reached the 864-pixel monitor cap. An explicit 420-pixel height stayed unchanged while toggling shortcuts.
+
+File-order desktop smoke verified newest-first direct and saved-file launches at 150% zoom, `s`/`S` toggling to oldest-first and back, and order preservation across list/grid switches. Control-modified `s` did not sort; the `?` overlay included the sort shortcut. Sorting left the saved queue and source file contents unchanged, and sorting after clearing an empty window remained safe.
