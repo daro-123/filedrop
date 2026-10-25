@@ -1,0 +1,11 @@
+[tasks.test]
+description = "Run Filedrop behavior tests"
+run = "python3 -m unittest discover -s tests -v"
+
+[tasks.build]
+description = "Build the Python source distribution and wheel"
+run = "python3 -c 'import setuptools.build_meta as backend; backend.build_sdist(\"dist\"); backend.build_wheel(\"dist\")'"
+
+[tasks.install]
+description = "Install Filedrop in a private local environment"
+run = "python3 install.py"

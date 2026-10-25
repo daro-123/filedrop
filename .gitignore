@@ -1,0 +1,18 @@
+# Python bytecode and package builds
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local virtual environments
+.venv/
+venv/
+
+# Nix development environments and build results
+.direnv/
+/result
+/result-*
+
+# Local assistant backups
+/.omp*/
