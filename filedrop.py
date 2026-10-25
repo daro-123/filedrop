@@ -263,6 +263,7 @@ def run_window(
                 )
 
             overlay = Gtk.Overlay()
+            overlay.add_css_class("filedrop-content")
             window.set_child(overlay)
             root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
             root.set_margin_top(12 if mode == "compact" and not decorate else 0)
@@ -272,6 +273,7 @@ def run_window(
             overlay.set_child(root)
             style = Gtk.CssProvider()
             style.load_from_data(
+                b".filedrop-content { background: @theme_bg_color; border-radius: inherit; }"
                 b".file-row { border-radius: 6px; padding: 4px 8px; }"
                 b".file-row:hover { background-color: alpha(@theme_fg_color, 0.08); }"
                 b".filedrop-header .filedrop-header-button { min-width: 32px; min-height: 32px; padding: 0; }"
@@ -366,9 +368,11 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
                 shortcuts.attach(key_cell, 0, row, 1, 1)
                 shortcuts.attach(action_cell, 1, row, 1, 1)
             overlay.add_overlay(shortcuts)
+            overlay.set_measure_overlay(shortcuts, height == "auto")
 
             def toggle_shortcuts():
                 shortcuts.set_visible(not shortcuts.get_visible())
+                schedule_auto_height()
 
             scroller = Gtk.ScrolledWindow()
             scroller.set_vexpand(True)
