@@ -342,7 +342,6 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
             shortcuts = Gtk.Grid()
             shortcuts.set_column_spacing(18)
             shortcuts.set_row_spacing(4)
-            shortcuts.set_visible(False)
             shortcuts.set_halign(Gtk.Align.CENTER)
             shortcuts.set_valign(Gtk.Align.CENTER)
             shortcuts.add_css_class("card")
@@ -368,13 +367,6 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
                 action_cell.set_xalign(0)
                 shortcuts.attach(key_cell, 0, row, 1, 1)
                 shortcuts.attach(action_cell, 1, row, 1, 1)
-            overlay.add_overlay(shortcuts)
-            overlay.set_measure_overlay(shortcuts, height == "auto")
-
-            def toggle_shortcuts():
-                shortcuts.set_visible(not shortcuts.get_visible())
-                schedule_auto_height()
-
             scroller = Gtk.ScrolledWindow()
             scroller.set_vexpand(True)
             scroller.set_min_content_height(-1 if height == "auto" else 180)
@@ -383,6 +375,57 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
                 # Preserve height-for-width measurement for wrapped grid rows.
                 scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
             root.append(scroller)
+            shortcuts_popover = Gtk.Popover()
+            shortcuts_popover.set_child(shortcuts)
+            shortcuts_popover.set_has_arrow(False)
+            shortcuts_popover.set_autohide(False)
+            shortcuts_popover.set_parent(overlay)
+            shortcuts_popover.set_position(Gtk.PositionType.TOP)
+            shortcuts_popover.set_visible(False)
+
+            def shortcut_frame_height() -> int:
+                frame = shortcuts_popover.get_first_child()
+                allocated, bounds = frame.compute_bounds(shortcuts_popover)
+                if shortcuts_popover.get_width() > 0 and allocated:
+                    return round(bounds.get_height())
+
+                _minimum, natural, _minimum_baseline, _natural_baseline = (
+                    frame.measure(
+                        Gtk.Orientation.VERTICAL,
+                        max(1, overlay.get_width()),
+                    )
+                )
+                return natural
+
+
+            def position_shortcuts(frame_height: int):
+                point = Gdk.Rectangle()
+                point.x = overlay.get_width() // 2
+                point.y = (overlay.get_height() + frame_height) // 2
+                point.width = 1
+                point.height = 1
+                shortcuts_popover.set_pointing_to(point)
+
+            def toggle_shortcuts():
+                if shortcuts_popover.get_visible():
+                    shortcuts_popover.popdown()
+                    if height == "auto":
+                        scroller.set_min_content_height(-1)
+                else:
+                    frame_height = shortcut_frame_height()
+                    if height == "auto":
+                        scroller.set_min_content_height(frame_height)
+                    position_shortcuts(frame_height)
+                    shortcuts_popover.popup()
+                    overlay.add_tick_callback(reposition_shortcuts)
+                schedule_auto_height()
+
+            def reposition_shortcuts(_widget, _frame_clock, _data=None):
+                if not shortcuts_popover.get_visible():
+                    return GLib.SOURCE_REMOVE
+                position_shortcuts(shortcut_frame_height())
+                shortcuts_popover.present()
+                return GLib.SOURCE_REMOVE
 
 
             list_items = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
@@ -445,6 +488,8 @@ b".filedrop-shortcuts { margin: 0; padding: 12px; }"
                 else:
                     scroller.set_max_content_height(-1)
                 window.set_default_size(460, -1)
+                if shortcuts_popover.get_visible():
+                    overlay.add_tick_callback(reposition_shortcuts)
                 return GLib.SOURCE_REMOVE
 
             auto_height_pending = False
